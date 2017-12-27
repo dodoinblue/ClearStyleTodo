@@ -7,10 +7,12 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
 
     override func viewDidLoad() {
@@ -46,9 +48,11 @@ class TodoListViewController: UITableViewController {
         
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            let item = Item(title: textField.text!)
-            self.itemArray.append(item)
             
+            let newItem = Item(context: self.context)
+            newItem.title = textField.text!
+            self.itemArray.append(newItem)
+
             self.saveItems()
         }
         alert.addTextField { (alertTextField) in
@@ -61,24 +65,21 @@ class TodoListViewController: UITableViewController {
     
     // MARK - Save / Load data
     func saveItems() {
-        let encoder = PropertyListEncoder()
         do {
-            let data = try encoder.encode(self.itemArray)
-            try data.write(to: self.dataFilePath!)
+            try context.save()
+            print("saved")
         } catch {
-            print("Error encoding array \(error)")
+            print("Error saving context \(error)")
         }
         self.tableView.reloadData()
     }
     
     func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                self.itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error loading items \(error)")
-            }
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching items \(error)")
         }
     }
     
