@@ -13,11 +13,15 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    var selectedCategory: Category? {
+        didSet {
+            loadItems()
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
     }
 
     // MARK - Tableview Datasource Methods
@@ -51,6 +55,7 @@ class TodoListViewController: UITableViewController {
             
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
 
             self.saveItems()
@@ -74,7 +79,15 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        print("parentCategory.name MATCHES \(selectedCategory!.name!)")
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -96,7 +109,7 @@ extension TodoListViewController: UISearchBarDelegate {
         if searchBar.text!.count < 1 {
             loadItems()
         } else {
-            loadItems(with: request)
+            loadItems(with: request, predicate: predicate)
         }
     }
 }
