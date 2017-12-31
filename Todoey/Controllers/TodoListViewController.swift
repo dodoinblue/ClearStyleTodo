@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -31,7 +31,7 @@ class TodoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
@@ -86,17 +86,20 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    // MARK - Save / Load data
-//    func saveItems() {
-//        do {
-//            try context.save()
-//            print("saved")
-//        } catch {
-//            print("Error saving context \(error)")
-//        }
-//        tableView.reloadData()
-//    }
+    //MARK: - Delete items
+    override func updateModel(at indexPath: IndexPath) {
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(item)
+                }
+            } catch {
+                print("Error saving context \(error)")
+            }
+        }
+    }
     
+    // MARK: - Save / Load data
     func loadItems() {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
@@ -106,12 +109,6 @@ class TodoListViewController: UITableViewController {
 
 extension TodoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//        let predicate = NSPredicate(format: "title CONTAINS %@", searchBar.text!)
-//        request.predicate = predicate
-//
-//        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
-//        request.sortDescriptors = [sortDescriptor]
         if searchBar.text!.count < 1 {
             loadItems()
         } else {
