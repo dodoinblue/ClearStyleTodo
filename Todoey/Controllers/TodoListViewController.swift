@@ -8,12 +8,15 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
+    let fallbackNavBagroundColor = "#9BD9FA"
     
+    @IBOutlet weak var searchBar: UISearchBar!
     var selectedCategory: Category? {
         didSet {
             loadItems()
@@ -22,6 +25,27 @@ class TodoListViewController: SwipeTableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("navBar not ready")
+        }
+        let colorString = selectedCategory?.color ?? fallbackNavBagroundColor
+        guard let color = UIColor(hexString: colorString) else {
+            fatalError("error parsing color \(colorString)")
+        }
+        navBar.barTintColor = color
+        navBar.tintColor = ContrastColorOf(color, returnFlat: true)
+        navBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor: ContrastColorOf(color, returnFlat: true)]
+        searchBar.barTintColor = color
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        guard let color = UIColor(hexString: fallbackNavBagroundColor) else {
+            fatalError("error parsing default color")
+        }
+        navigationController?.navigationBar.barTintColor = color
     }
 
     // MARK - Tableview Datasource Methods
@@ -32,10 +56,20 @@ class TodoListViewController: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("navBar not ready")
+        }
         
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none
+            if let color = navBar.barTintColor?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                print("bar tint color \(color.hexValue())")
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+            } else {
+                print("error setting cell color")
+            }
         } else {
             cell.textLabel?.text = "No Items Added"
         }

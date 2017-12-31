@@ -48,6 +48,9 @@
                             </connections>
                         </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="searchBar" destination="xCu-mZ-QTC" id="BiM-A5-FPR"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zQC-fx-mbt" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -100,7 +103,6 @@
                     </tableView>
                     <navigationItem key="navigationItem" title="Todoey" id="WB6-xX-Tr8">
                         <barButtonItem key="rightBarButtonItem" systemItem="add" id="PwJ-x3-duY">
-                            <color key="tintColor" red="0.99963909390000005" green="1" blue="0.99975615740000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
                                 <action selector="addButtonPressed:" destination="Bss-BC-7xk" id="aEq-4o-iCL"/>
                             </connections>
